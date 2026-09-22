@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Para Ti · 21 de Septiembre</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=3">
+</head>
+<body>
+
+<audio id="bgMusic" loop preload="none">
+    <source src="hot_freaks.mp3" type="audio/mpeg">
+</audio>
+
+<button id="musicToggle" title="Música">🎵</button>
+<div id="musicToast">🎵 Para que suene la música, coloca el archivo <b>hot_freaks.mp3</b> junto a esta página.</div>
+
+<!-- PANTALLA 1: INICIO -->
+<div id="screen-start" class="screen active">
+    <div class="start-bat">🦇</div>
+    <h1 class="gothic">La Cripta</h1>
+    <p class="sub">Algo especial aguarda en la oscuridad… Estas lista?<br>un tesoro que ilumina la noche.</p>
+    <button id="btnStart">Entrar a la cripta</button>
+</div>
+
+<!-- PANTALLA 2: JUEGO -->
+<div id="screen-game" class="screen">
+    <header id="hud">
+        <span id="score" class="pill">🌼 0</span>
+        <span id="hint">Lleva la llave al cofre y esquiva las cadenas si chocas pierdes las flores</span>
+        <span id="hearts" class="pill">🖤🖤🖤</span>
+    </header>
+    <div id="tierMsg"></div>
+    <div id="oopsMsg">💔 ¡Perdiste una vida!<br><span class="small">El conteo de flores volvió a 0</span></div>
+    <div id="game-area">
+        <canvas id="game"></canvas>
+    </div>
+</div>
+
+<!-- PANTALLA 3: RECOMPENSA -->
+<div id="screen-reward" class="screen">
+    <div id="rays"></div>
+    <div id="rain"></div>
+    <div id="parchment-wrap">
+        <div id="parchment">
+            <div class="p-title">Feliz 21 de Septiembre</div>
+            <div class="p-divider">🦇 ⚜ ✦</div>
+            <div id="pBody" class="p-body"></div>
+            <div class="p-sign">— De <strong>???</strong></div>
+            <button id="restartBtn" class="seal" title="Jugar de nuevo">🦇</button>
+            <div class="p-replay">toca el sello para jugar de nuevo</div>
+        </div>
+    </div>
+</div>
+
+<script src="game.js?v=3"></script>
+</body>
+</html>
