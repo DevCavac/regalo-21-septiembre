@@ -273,18 +273,28 @@
     var oopsMsg = document.getElementById('oopsMsg');
     var oopsTimer = null;
 
-    // Al chocar con una cadena: se pierde una vida y el conteo de flores vuelve a 0
-    function onLifeLost() {
+    // Al chocar con una cadena: se pierde una vida y el conteo de flores vuelve a 0.
+    // En vez de teletransportar al murciélago al origen (que causaba la sensación
+    // de que "se teletransportan"), se le da un empujón corto alejándolo del golpe.
+    function onLifeLost(o) {
         lives--;
         score = 0;
         updateHud();
-        burst(bat.x, bat.y, 16, 'spark');
+        burst(bat.x, bat.y, 12, 'spark');
         tierEl.classList.remove('show');
         oopsMsg.classList.add('show');
         clearTimeout(oopsTimer);
         oopsTimer = setTimeout(function () { oopsMsg.classList.remove('show'); }, 1600);
         if (lives <= 0) { lives = 3; updateHud(); }
-        resetBat();
+        if (o) {
+            var pp = pendPos(o);
+            var dx = bat.x - pp.x, dy = bat.y - pp.y;
+            var d = Math.hypot(dx, dy) || 1;
+            bat.x = Math.min(Math.max(bat.x + (dx / d) * 60, 18), W - 18);
+            bat.y = Math.min(Math.max(bat.y + (dy / d) * 60, 18), H - 18);
+            bat.tx = bat.x; bat.ty = bat.y;
+        }
+        bat.inv = 1.5;
     }
 
     // ---------- Control puntero ----------
@@ -383,8 +393,11 @@
         ctx.translate(x, y);
         ctx.rotate(rot);
         ctx.lineCap = 'round';
-        ctx.shadowColor = 'rgba(214, 226, 255, ' + glow + ')';
-        ctx.shadowBlur = 18 * glow;
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.globalAlpha = Math.min(1, glow) * 0.5;
+        ctx.drawImage(spriteKeyGlow, -28, -28, 56, 56);
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = 'source-over';
         ctx.strokeStyle = gradKey;
         ctx.fillStyle = gradKey;
         ctx.lineWidth = 3.4;
@@ -590,11 +603,12 @@
                 ctx.arc(0, 0, p.size * 0.16, 0, Math.PI * 2);
                 ctx.fill();
             } else {
-                ctx.fillStyle = 'rgba(255, 240, 190, 0.95)';
-                ctx.shadowBlur = 10;
-                ctx.shadowColor = 'rgba(255, 215, 92, 0.9)';
+                ctx.globalAlpha = a * 0.85;
+                ctx.drawImage(spriteSpark, -p.size, -p.size, p.size * 2, p.size * 2);
+                ctx.globalAlpha = a;
+                ctx.fillStyle = 'rgba(255, 243, 192, 0.98)';
                 ctx.beginPath();
-                ctx.arc(0, 0, p.size * 0.3, 0, Math.PI * 2);
+                ctx.arc(0, 0, p.size * 0.32, 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.restore();
@@ -632,8 +646,9 @@
         ctx.save();
         ctx.globalAlpha = 1 - warmT * 0.5;
         var mx = W * 0.88, my = H * 0.12, mr = Math.min(W, H) * 0.07;
-        ctx.shadowColor = 'rgba(200, 205, 225, 0.5)';
-        ctx.shadowBlur = 24;
+        ctx.globalCompositeOperation = 'lighter';
+        ctx.drawImage(spriteMoonGlow, mx - mr * 3, my - mr * 3, mr * 6, mr * 6);
+        ctx.globalCompositeOperation = 'source-over';
         ctx.fillStyle = '#c8cdde';
         ctx.beginPath();
         ctx.arc(mx, my, mr, 0, Math.PI * 2);
@@ -703,7 +718,7 @@
     // ---------- Sprites pre-renderizados (rendimiento) ----------
     // Se dibujan una sola vez y se reutilizan cada fotograma en vez de
     // crear gradientes/shadowBlur por frame.
-    var spriteGlow, spriteRays;
+    var spriteGlow, spriteRays, spriteSpark, spriteKeyGlow, spriteMoonGlow;
     function buildSprites() {
         spriteGlow = document.createElement('canvas');
         spriteGlow.width = spriteGlow.height = 128;
@@ -714,6 +729,36 @@
         gr.addColorStop(1, 'rgba(255, 176, 62, 0)');
         c.fillStyle = gr;
         c.fillRect(0, 0, 128, 128);
+
+        spriteSpark = document.createElement('canvas');
+        spriteSpark.width = spriteSpark.height = 64;
+        var cs = spriteSpark.getContext('2d');
+        var gs = cs.createRadialGradient(32, 32, 1, 32, 32, 32);
+        gs.addColorStop(0, 'rgba(255, 251, 214, 0.95)');
+        gs.addColorStop(0.35, 'rgba(255, 224, 130, 0.55)');
+        gs.addColorStop(1, 'rgba(255, 215, 92, 0)');
+        cs.fillStyle = gs;
+        cs.fillRect(0, 0, 64, 64);
+
+        spriteKeyGlow = document.createElement('canvas');
+        spriteKeyGlow.width = spriteKeyGlow.height = 96;
+        var ck = spriteKeyGlow.getContext('2d');
+        var gk = ck.createRadialGradient(48, 48, 4, 48, 48, 48);
+        gk.addColorStop(0, 'rgba(214, 226, 255, 0.85)');
+        gk.addColorStop(0.5, 'rgba(214, 226, 255, 0.3)');
+        gk.addColorStop(1, 'rgba(214, 226, 255, 0)');
+        ck.fillStyle = gk;
+        ck.fillRect(0, 0, 96, 96);
+
+        spriteMoonGlow = document.createElement('canvas');
+        spriteMoonGlow.width = spriteMoonGlow.height = 128;
+        var cm = spriteMoonGlow.getContext('2d');
+        var gm = cm.createRadialGradient(64, 64, 10, 64, 64, 64);
+        gm.addColorStop(0, 'rgba(200, 205, 225, 0.55)');
+        gm.addColorStop(0.6, 'rgba(200, 205, 225, 0.18)');
+        gm.addColorStop(1, 'rgba(200, 205, 225, 0)');
+        cm.fillStyle = gm;
+        cm.fillRect(0, 0, 128, 128);
 
         spriteRays = document.createElement('canvas');
         spriteRays.width = spriteRays.height = 256;
@@ -827,7 +872,7 @@
         if (bat.inv <= 0) {
             for (var oi = 0; oi < obs.length; oi++) {
                 if (hitByKey(obs[oi])) {
-                    onLifeLost();
+                    onLifeLost(obs[oi]);
                     break;
                 }
             }
@@ -932,23 +977,34 @@
     }
 
     // ---------- Bucle ----------
-    // DPR adaptativo: baja la resolución si el juego va lento y la sube si va sobrado
+    // DPR adaptativo: baja la resolución solo si el juego va lento de forma
+    // sostenida, la sube solo si va sobrado bastante rato, y espera un respiro
+    // entre cambios para no provocar una lluvia de resize() (que era la causa
+    // de que "se teletransportaran" los objetos y no recuperara la fluidez).
     var baseDPR = Math.min(window.devicePixelRatio || 1, 2);
-    var fpsT = 0, frames = 0;
+    var fpsT = 0, frames = 0, dprWait = 0, lowStreak = 0, highStreak = 0;
     function monitorFps(dt) {
         if (dt <= 0) return;
         fpsT += dt; frames++;
-        if (fpsT >= 4) {
-            var fps = frames / fpsT;
-            frames = 0; fpsT = 0;
-            var target = DPR;
-            if (fps < 42) target = Math.max(1.05, DPR - 0.35);
-            else if (fps > 57) target = Math.min(baseDPR, DPR + 0.35);
-            if (Math.abs(target - DPR) > 0.1) { DPR = target; resize(); }
+        if (fpsT < 4) return;
+        var fps = frames / fpsT;
+        frames = 0; fpsT = 0;
+        if (dprWait > 0) { dprWait -= 4; return; }
+        if (fps < 42) { lowStreak++; highStreak = 0; }
+        else if (fps > 57) { highStreak++; lowStreak = 0; }
+        else { lowStreak = 0; highStreak = 0; }
+        if (lowStreak >= 2 && DPR > 1) {
+            dprWait = 8;
+            DPR = Math.max(1, Math.round((DPR - 0.25) * 4) / 4);
+            resize();
+        } else if (highStreak >= 3 && DPR < baseDPR) {
+            dprWait = 12;
+            DPR = Math.min(baseDPR, Math.round((DPR + 0.25) * 4) / 4);
+            resize();
         }
     }
 
-    function frame(now) {
+function frame(now) {
         var dt = Math.min(0.05, (now - last) / 1000);
         last = now;
         // En inicio y en la pantalla final el canvas no se usa: se pausa el
