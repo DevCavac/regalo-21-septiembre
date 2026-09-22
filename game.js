@@ -278,7 +278,7 @@
         lives--;
         score = 0;
         updateHud();
-        burst(bat.x, bat.y, 10, 'spark');
+        burst(bat.x, bat.y, 16, 'spark');
         tierEl.classList.remove('show');
         oopsMsg.classList.add('show');
         clearTimeout(oopsTimer);
@@ -383,11 +383,8 @@
         ctx.translate(x, y);
         ctx.rotate(rot);
         ctx.lineCap = 'round';
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.globalAlpha = Math.min(1, glow) * 0.5;
-        ctx.drawImage(spriteKeyGlow, -28, -28, 56, 56);
-        ctx.globalAlpha = 1;
-        ctx.globalCompositeOperation = 'source-over';
+        ctx.shadowColor = 'rgba(214, 226, 255, ' + glow + ')';
+        ctx.shadowBlur = 18 * glow;
         ctx.strokeStyle = gradKey;
         ctx.fillStyle = gradKey;
         ctx.lineWidth = 3.4;
@@ -536,10 +533,8 @@
     }
 
     // ---------- Partículas de victoria ----------
-    var PART_MAX = 48;
     function burst(x, y, n, kind) {
         for (var i = 0; i < n; i++) {
-            if (parts.length >= PART_MAX) return;
             var a = Math.random() * Math.PI * 2;
             var sp = pickFrac(60, 420);
             var p = {
@@ -548,7 +543,7 @@
                 vx: Math.cos(a) * sp,
                 vy: Math.sin(a) * sp,
                 age: 0,
-                life: pickFrac(0.55, 1.3),
+                life: pickFrac(1.0, 2.2),
                 size: pickFrac(5, 12),
                 rot: Math.random() * Math.PI * 2,
                 vr: (Math.random() - 0.5) * 6,
@@ -576,7 +571,7 @@
             var a = 1 - p.age / p.life;
             ctx.save();
             ctx.globalAlpha = a;
-            ctx.globalCompositeOperation = 'source-over';
+            ctx.globalCompositeOperation = p.g > 150 ? 'lighter' : 'source-over';
             ctx.translate(p.x, p.y);
             ctx.rotate(p.rot);
             if (p.kind === 'bat') {
@@ -595,12 +590,11 @@
                 ctx.arc(0, 0, p.size * 0.16, 0, Math.PI * 2);
                 ctx.fill();
             } else {
-                ctx.globalAlpha = a * 0.85;
-                ctx.drawImage(spriteSpark, -p.size, -p.size, p.size * 2, p.size * 2);
-                ctx.globalAlpha = a;
-                ctx.fillStyle = 'rgba(255, 243, 192, 0.98)';
+                ctx.fillStyle = 'rgba(255, 240, 190, 0.95)';
+                ctx.shadowBlur = 10;
+                ctx.shadowColor = 'rgba(255, 215, 92, 0.9)';
                 ctx.beginPath();
-                ctx.arc(0, 0, p.size * 0.32, 0, Math.PI * 2);
+                ctx.arc(0, 0, p.size * 0.3, 0, Math.PI * 2);
                 ctx.fill();
             }
             ctx.restore();
@@ -638,9 +632,8 @@
         ctx.save();
         ctx.globalAlpha = 1 - warmT * 0.5;
         var mx = W * 0.88, my = H * 0.12, mr = Math.min(W, H) * 0.07;
-        ctx.globalCompositeOperation = 'lighter';
-        ctx.drawImage(spriteMoonGlow, mx - mr * 3, my - mr * 3, mr * 6, mr * 6);
-        ctx.globalCompositeOperation = 'source-over';
+        ctx.shadowColor = 'rgba(200, 205, 225, 0.5)';
+        ctx.shadowBlur = 24;
         ctx.fillStyle = '#c8cdde';
         ctx.beginPath();
         ctx.arc(mx, my, mr, 0, Math.PI * 2);
@@ -710,7 +703,7 @@
     // ---------- Sprites pre-renderizados (rendimiento) ----------
     // Se dibujan una sola vez y se reutilizan cada fotograma en vez de
     // crear gradientes/shadowBlur por frame.
-    var spriteGlow, spriteRays, spriteSpark, spriteKeyGlow, spriteMoonGlow;
+    var spriteGlow, spriteRays;
     function buildSprites() {
         spriteGlow = document.createElement('canvas');
         spriteGlow.width = spriteGlow.height = 128;
@@ -721,36 +714,6 @@
         gr.addColorStop(1, 'rgba(255, 176, 62, 0)');
         c.fillStyle = gr;
         c.fillRect(0, 0, 128, 128);
-
-        spriteSpark = document.createElement('canvas');
-        spriteSpark.width = spriteSpark.height = 64;
-        var cs = spriteSpark.getContext('2d');
-        var gs = cs.createRadialGradient(32, 32, 1, 32, 32, 32);
-        gs.addColorStop(0, 'rgba(255, 251, 214, 0.95)');
-        gs.addColorStop(0.35, 'rgba(255, 224, 130, 0.55)');
-        gs.addColorStop(1, 'rgba(255, 215, 92, 0)');
-        cs.fillStyle = gs;
-        cs.fillRect(0, 0, 64, 64);
-
-        spriteKeyGlow = document.createElement('canvas');
-        spriteKeyGlow.width = spriteKeyGlow.height = 96;
-        var ck = spriteKeyGlow.getContext('2d');
-        var gk = ck.createRadialGradient(48, 48, 4, 48, 48, 48);
-        gk.addColorStop(0, 'rgba(214, 226, 255, 0.85)');
-        gk.addColorStop(0.5, 'rgba(214, 226, 255, 0.3)');
-        gk.addColorStop(1, 'rgba(214, 226, 255, 0)');
-        ck.fillStyle = gk;
-        ck.fillRect(0, 0, 96, 96);
-
-        spriteMoonGlow = document.createElement('canvas');
-        spriteMoonGlow.width = spriteMoonGlow.height = 128;
-        var cm = spriteMoonGlow.getContext('2d');
-        var gm = cm.createRadialGradient(64, 64, 10, 64, 64, 64);
-        gm.addColorStop(0, 'rgba(200, 205, 225, 0.55)');
-        gm.addColorStop(0.6, 'rgba(200, 205, 225, 0.18)');
-        gm.addColorStop(1, 'rgba(200, 205, 225, 0)');
-        cm.fillStyle = gm;
-        cm.fillRect(0, 0, 128, 128);
 
         spriteRays = document.createElement('canvas');
         spriteRays.width = spriteRays.height = 256;
@@ -842,7 +805,7 @@
                 score++;
                 flowers.splice(f, 1);
                 parts.push({ kind: 'spark', x: fl.x, y: fl.y, vx: 0, vy: 0, age: 0, life: 0.7, size: 8, rot: 0, vr: 0, g: 200 });
-                burst(fl.x, fl.y, 6, 'spark');
+                burst(fl.x, fl.y, 8, 'spark');
                 updateHud();
                 maybeAddDrift();
                 if (score % 10 === 0) {
@@ -969,30 +932,19 @@
     }
 
     // ---------- Bucle ----------
-    // DPR adaptativo: baja la resolución solo si el juego va lento de forma
-    // sostenida, la sube solo si va sobrado bastante rato, y espera un respiro
-    // entre cambios para no provocar una lluvia de resize() (que era la causa
-    // de que "se teletransportaran" los objetos y no recuperara la fluidez).
+    // DPR adaptativo: baja la resolución si el juego va lento y la sube si va sobrado
     var baseDPR = Math.min(window.devicePixelRatio || 1, 2);
-    var fpsT = 0, frames = 0, dprWait = 0, lowStreak = 0, highStreak = 0;
+    var fpsT = 0, frames = 0;
     function monitorFps(dt) {
         if (dt <= 0) return;
         fpsT += dt; frames++;
-        if (fpsT < 4) return;
-        var fps = frames / fpsT;
-        frames = 0; fpsT = 0;
-        if (dprWait > 0) { dprWait -= 4; return; }
-        if (fps < 42) { lowStreak++; highStreak = 0; }
-        else if (fps > 57) { highStreak++; lowStreak = 0; }
-        else { lowStreak = 0; highStreak = 0; }
-        if (lowStreak >= 2 && DPR > 1) {
-            dprWait = 8;
-            DPR = Math.max(1, Math.round((DPR - 0.25) * 4) / 4);
-            resize();
-        } else if (highStreak >= 3 && DPR < baseDPR) {
-            dprWait = 12;
-            DPR = Math.min(baseDPR, Math.round((DPR + 0.25) * 4) / 4);
-            resize();
+        if (fpsT >= 4) {
+            var fps = frames / fpsT;
+            frames = 0; fpsT = 0;
+            var target = DPR;
+            if (fps < 42) target = Math.max(1.05, DPR - 0.35);
+            else if (fps > 57) target = Math.min(baseDPR, DPR + 0.35);
+            if (Math.abs(target - DPR) > 0.1) { DPR = target; resize(); }
         }
     }
 
