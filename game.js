@@ -130,9 +130,6 @@
     var bat = { x: 80, y: 100, tx: 80, ty: 100, r: 20, inv: 0 };
     var lives = 3;
     var score = 0;
-    // Nivel más alto ya celebrado (para que al morir y volver a juntar
-    // flores no se repitan las animaciones de 10, 20, 30… y no se salten fotogramas)
-    var tierShown = 0;
     var mode = 'game'; // 'game' | 'win'
     var tWin = 0;
     var showStarted = false;
@@ -174,7 +171,6 @@
         showStarted = false;
         lives = 3;
         score = 0;
-        tierShown = 0;
         updateHud();
         obs = [];
         flowers = [];
@@ -809,15 +805,10 @@
                 updateHud();
                 maybeAddDrift();
                 if (score % 10 === 0) {
-                    // Cada nivel se celebra una sola vez por partida:
-                    // si ya lo mostraste (antes de morir), no se repite.
-                    if (score / 10 > tierShown) {
-                        tierShown = score / 10;
-                        showTierMessage(score);
-                        if (score >= 100) {
-                            burst(bat.x, bat.y, 26, 'spark');
-                            burst(bat.x, bat.y, 10, 'petal');
-                        }
+                    showTierMessage(score);
+                    if (score >= 100) {
+                        burst(bat.x, bat.y, 26, 'spark');
+                        burst(bat.x, bat.y, 10, 'petal');
                     }
                 }
             }
