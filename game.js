@@ -61,6 +61,7 @@
 
     var W = 0, H = 0, DPR = 0;
     var time = 0;
+    var motionTime = 0;
     var last = performance.now();
 
     // El juego solo avanza una vez que el usuario entra a la cripta (corrige
@@ -130,6 +131,7 @@
     var bat = { x: 80, y: 100, tx: 80, ty: 100, r: 20, inv: 0 };
     var lives = 3;
     var score = 0;
+    var hudDirty = true;
     var mode = 'game'; // 'game' | 'win'
     var tWin = 0;
     var showStarted = false;
@@ -175,6 +177,7 @@
         obs = [];
         flowers = [];
         parts = [];
+        motionTime = 0;
         for (var i = 0; i < 3; i++) makeKeyGroup();
         for (var j = 0; j < 1; j++) makeKeyDrift();
         spawnFlowers(5, true);
@@ -260,9 +263,15 @@
     }
 
     function updateHud() {
+        hudDirty = true;
+    }
+
+    function flushHud() {
+        if (!hudDirty) return;
         scoreEl.textContent = '🌼 ' + score;
         var h = '🖤'.repeat(Math.max(0, lives)) + '🤍'.repeat(Math.max(0, 3 - lives));
         heartsEl.textContent = h.length ? h : '🖤';
+        hudDirty = false;
     }
 
     // ---------- Perder una vida ----------
@@ -274,7 +283,8 @@
         lives--;
         score = 0;
         updateHud();
-        burst(bat.x, bat.y, 16, 'spark');
+        parts.length = 0;
+        burst(bat.x, bat.y, 6, 'spark');
         tierEl.classList.remove('show');
         oopsMsg.classList.add('show');
         clearTimeout(oopsTimer);
@@ -312,33 +322,55 @@
         // alas
         ctx.fillStyle = 'rgba(96, 10, 22, 0.95)';
         ctx.beginPath();
-        ctx.moveTo(2, -2);
-        ctx.quadraticCurveTo(-8 - flap * 14, 12 - flap * 6, -26 - flap * 12, 16 + flap * 10);
-        ctx.quadraticCurveTo(-10, 24, 2, 18);
+        ctx.moveTo(-4, -2);
+        ctx.bezierCurveTo(-12 - flap * 12, -1 - flap * 5, -20 - flap * 14, 7 - flap * 7, -33 - flap * 10, 5 + flap * 8);
+        ctx.bezierCurveTo(-29 - flap * 8, 13 + flap * 8, -25 - flap * 7, 19 + flap * 10, -18, 23);
+        ctx.bezierCurveTo(-13, 18, -7, 20, -2, 18);
         ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(-2, -2);
-        ctx.quadraticCurveTo(8 + flap * 14, 12 - flap * 6, 26 + flap * 12, 16 + flap * 10);
-        ctx.quadraticCurveTo(10, 24, -2, 18);
+        ctx.moveTo(4, -2);
+        ctx.bezierCurveTo(12 + flap * 12, -1 - flap * 5, 20 + flap * 14, 7 - flap * 7, 33 + flap * 10, 5 + flap * 8);
+        ctx.bezierCurveTo(29 + flap * 8, 13 + flap * 8, 25 + flap * 7, 19 + flap * 10, 18, 23);
+        ctx.bezierCurveTo(13, 18, 7, 20, 2, 18);
         ctx.fill();
+        ctx.strokeStyle = 'rgba(222, 82, 93, 0.42)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(-5, 0); ctx.quadraticCurveTo(-17, 8, -28, 7);
+        ctx.moveTo(5, 0); ctx.quadraticCurveTo(17, 8, 28, 7);
+        ctx.stroke();
         // cuerpo
         ctx.fillStyle = 'rgba(24, 22, 28, 1)';
         ctx.beginPath();
-        ctx.ellipse(0, 4, 13, 15, 0, 0, Math.PI * 2);
+        ctx.moveTo(-10, -1);
+        ctx.bezierCurveTo(-13, 8, -10, 20, 0, 24);
+        ctx.bezierCurveTo(10, 20, 13, 8, 10, -1);
+        ctx.bezierCurveTo(7, -7, -7, -7, -10, -1);
         ctx.fill();
         ctx.strokeStyle = 'rgba(161, 18, 18, 0.55)';
         ctx.lineWidth = 1;
         ctx.stroke();
         // cabeza
         ctx.beginPath();
-        ctx.arc(0, -8, 8, 0, Math.PI * 2);
+        ctx.moveTo(-8, -9);
+        ctx.bezierCurveTo(-8, -15, -4, -18, 0, -18);
+        ctx.bezierCurveTo(4, -18, 8, -15, 8, -9);
+        ctx.bezierCurveTo(8, -4, 4, -1, 0, -1);
+        ctx.bezierCurveTo(-4, -1, -8, -4, -8, -9);
         ctx.fillStyle = 'rgba(20, 18, 24, 1)';
         ctx.fill();
         // orejas
         ctx.beginPath();
-        ctx.moveTo(-5, -13); ctx.lineTo(-9, -22); ctx.lineTo(-1, -15); ctx.fill();
+        ctx.moveTo(-6, -13); ctx.bezierCurveTo(-10, -17, -11, -22, -10, -25);
+        ctx.bezierCurveTo(-6, -23, -3, -20, -2, -15); ctx.fill();
         ctx.beginPath();
-        ctx.moveTo(5, -13); ctx.lineTo(9, -22); ctx.lineTo(1, -15); ctx.fill();
+        ctx.moveTo(6, -13); ctx.bezierCurveTo(10, -17, 11, -22, 10, -25);
+        ctx.bezierCurveTo(6, -23, 3, -20, 2, -15); ctx.fill();
+        ctx.fillStyle = 'rgba(174, 36, 54, 0.8)';
+        ctx.beginPath();
+        ctx.moveTo(-7, -16); ctx.lineTo(-9, -21); ctx.lineTo(-4, -17); ctx.fill();
+        ctx.beginPath();
+        ctx.moveTo(7, -16); ctx.lineTo(9, -21); ctx.lineTo(4, -17); ctx.fill();
         // ojos
         ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = redEye || 'rgba(255, 40, 40, 0.75)';
@@ -687,11 +719,8 @@
             ctx.drawImage(spriteGlow, -22, -22, 44, 44);
             ctx.globalAlpha = 1;
             ctx.globalCompositeOperation = 'source-over';
-            ctx.font = Math.max(20, Math.min(30, W * 0.03)) + 'px serif';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillStyle = '#ffd75e';
-            ctx.fillText('🌼', 0, 0);
+            var flowerSize = Math.max(28, Math.min(38, W * 0.04));
+            ctx.drawImage(spriteFlower, -flowerSize / 2, -flowerSize / 2, flowerSize, flowerSize);
             ctx.restore();
         }
     }
@@ -699,7 +728,7 @@
     // ---------- Sprites pre-renderizados (rendimiento) ----------
     // Se dibujan una sola vez y se reutilizan cada fotograma en vez de
     // crear gradientes/shadowBlur por frame.
-    var spriteGlow, spriteRays;
+    var spriteGlow, spriteRays, spriteFlower;
     function buildSprites() {
         spriteGlow = document.createElement('canvas');
         spriteGlow.width = spriteGlow.height = 128;
@@ -727,6 +756,14 @@
             cr.closePath();
             cr.fill();
         }
+
+        spriteFlower = document.createElement('canvas');
+        spriteFlower.width = spriteFlower.height = 64;
+        var fc = spriteFlower.getContext('2d');
+        fc.font = '34px serif';
+        fc.textAlign = 'center';
+        fc.textBaseline = 'middle';
+        fc.fillText('🌼', 32, 32);
     }
 
     var vigGrad = null, vigW = 0, vigH = 0;
@@ -775,17 +812,18 @@
         bat.inv = Math.max(0, bat.inv - dt);
 
         var pace = 1 + Math.min(1, score / 14) * 0.55;
+        motionTime += dt * pace;
 
         // obstáculos
         for (var i = 0; i < obs.length; i++) {
             var o = obs[i];
             if (o.type === 'pendulum') {
-                o.angle = o.A * Math.sin(time * o.w * pace + o.phase);
+                o.angle = o.A * Math.sin(motionTime * o.w + o.phase);
                 o.pivotX = o.anchorX + Math.sin(o.angle) * o.L;
                 o.pivotY = rodY + Math.cos(o.angle) * o.L + 4;
             } else {
-                o.x = o.bx + Math.sin(time * o.w1 * pace + o.ph1) * o.sx * W;
-                o.y = o.by + Math.sin(time * o.w2 * pace + o.ph2) * o.sy * H;
+                o.x = o.bx + Math.sin(motionTime * o.w1 + o.ph1) * o.sx * W;
+                o.y = o.by + Math.sin(motionTime * o.w2 + o.ph2) * o.sy * H;
                 o.y = Math.max(50, Math.min(H - 20, o.y));
                 o.rot += o.vr * dt;
             }
@@ -949,6 +987,7 @@
         }
         monitorFps(dt);
         update(dt);
+        flushHud();
         render();
         requestAnimationFrame(frame);
     }
