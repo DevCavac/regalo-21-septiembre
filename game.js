@@ -273,28 +273,18 @@
     var oopsMsg = document.getElementById('oopsMsg');
     var oopsTimer = null;
 
-    // Al chocar con una cadena: se pierde una vida y el conteo de flores vuelve a 0.
-    // En vez de teletransportar al murciélago al origen (que causaba la sensación
-    // de que "se teletransportan"), se le da un empujón corto alejándolo del golpe.
-    function onLifeLost(o) {
+    // Al chocar con una cadena: se pierde una vida y el conteo de flores vuelve a 0
+    function onLifeLost() {
         lives--;
         score = 0;
         updateHud();
-        burst(bat.x, bat.y, 12, 'spark');
+        burst(bat.x, bat.y, 10, 'spark');
         tierEl.classList.remove('show');
         oopsMsg.classList.add('show');
         clearTimeout(oopsTimer);
         oopsTimer = setTimeout(function () { oopsMsg.classList.remove('show'); }, 1600);
         if (lives <= 0) { lives = 3; updateHud(); }
-        if (o) {
-            var pp = pendPos(o);
-            var dx = bat.x - pp.x, dy = bat.y - pp.y;
-            var d = Math.hypot(dx, dy) || 1;
-            bat.x = Math.min(Math.max(bat.x + (dx / d) * 60, 18), W - 18);
-            bat.y = Math.min(Math.max(bat.y + (dy / d) * 60, 18), H - 18);
-            bat.tx = bat.x; bat.ty = bat.y;
-        }
-        bat.inv = 1.5;
+        resetBat();
     }
 
     // ---------- Control puntero ----------
@@ -546,8 +536,10 @@
     }
 
     // ---------- Partículas de victoria ----------
+    var PART_MAX = 48;
     function burst(x, y, n, kind) {
         for (var i = 0; i < n; i++) {
+            if (parts.length >= PART_MAX) return;
             var a = Math.random() * Math.PI * 2;
             var sp = pickFrac(60, 420);
             var p = {
@@ -556,7 +548,7 @@
                 vx: Math.cos(a) * sp,
                 vy: Math.sin(a) * sp,
                 age: 0,
-                life: pickFrac(1.0, 2.2),
+                life: pickFrac(0.55, 1.3),
                 size: pickFrac(5, 12),
                 rot: Math.random() * Math.PI * 2,
                 vr: (Math.random() - 0.5) * 6,
@@ -584,7 +576,7 @@
             var a = 1 - p.age / p.life;
             ctx.save();
             ctx.globalAlpha = a;
-            ctx.globalCompositeOperation = p.g > 150 ? 'lighter' : 'source-over';
+            ctx.globalCompositeOperation = 'source-over';
             ctx.translate(p.x, p.y);
             ctx.rotate(p.rot);
             if (p.kind === 'bat') {
@@ -850,7 +842,7 @@
                 score++;
                 flowers.splice(f, 1);
                 parts.push({ kind: 'spark', x: fl.x, y: fl.y, vx: 0, vy: 0, age: 0, life: 0.7, size: 8, rot: 0, vr: 0, g: 200 });
-                burst(fl.x, fl.y, 8, 'spark');
+                burst(fl.x, fl.y, 6, 'spark');
                 updateHud();
                 maybeAddDrift();
                 if (score % 10 === 0) {
@@ -872,7 +864,7 @@
         if (bat.inv <= 0) {
             for (var oi = 0; oi < obs.length; oi++) {
                 if (hitByKey(obs[oi])) {
-                    onLifeLost(obs[oi]);
+                    onLifeLost();
                     break;
                 }
             }
@@ -1004,7 +996,7 @@
         }
     }
 
-function frame(now) {
+    function frame(now) {
         var dt = Math.min(0.05, (now - last) / 1000);
         last = now;
         // En inicio y en la pantalla final el canvas no se usa: se pausa el
